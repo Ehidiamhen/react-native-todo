@@ -1,54 +1,138 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { StyleSheet, TextInput, Button, Alert, View, Pressable, Text, } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+
 
 export default function HomeScreen() {
+    const [todoInput, setTodoInput] = useState('');
+    const [todoItems, setTodoItems] = useState<Array<string>>([]);
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [currentEditValue, setCurrentEditValue] = useState('');
+
+    useEffect(() => {
+        const getTodos = async () => {
+            try {
+                const value = await AsyncStorage.getItem('Todos');
+                return value != null ? setTodoItems(JSON.parse(value)) : null;
+            } catch (e) {
+                console.error('Failed to retrieve data:', e);
+            }
+        }
+        getTodos();
+    }, [])
+
+    useEffect(() => {
+        const storeTodos = async () => {
+            try {
+                await AsyncStorage.setItem('Todos', JSON.stringify(todoItems));
+            } catch (e) {
+                console.error('Failed to save data:', e);
+            }
+        };
+        storeTodos();
+    }, [todoItems])
+
+    const handleAddTodo = async () => {
+        if(todoInput.trim() === '') {
+            Alert.alert('Error', 'Please enter a todo item');
+        } else {
+            setTodoItems([todoInput, ...todoItems])
+            setTodoInput('')
+        }
+    }
+
+    const handleEdit = (index: number) => {
+        setEditingIndex(index);
+        setCurrentEditValue(todoItems[index]);
+    }
+
+    const handleSaveEdit = () => {
+        if(editingIndex !== null && currentEditValue !== '') {
+            const editedTodos = todoItems.map((item, index) =>
+                index === editingIndex ? currentEditValue : item
+            );
+            setTodoItems(editedTodos);
+            setEditingIndex(null);
+            setCurrentEditValue('');
+        }
+        if(currentEditValue === '') {
+            Alert.alert('Error', 'Please type a todo item');
+        } 
+    }
+
+    const handleDelete = (index: number) => {
+        const updatedTodos = todoItems.filter((_, i) => i !== index)
+        setTodoItems(updatedTodos)
+    }
+
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+    headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
       headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+        <IconSymbol
+          size={310}
+          color="#808080"
+          name="chevron.left.forwardslash.chevron.right"
+          style={styles.headerImage}
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+        <ThemedText type="title">Todo List</ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
+        <View style={{gap: 10}}>
+        <TextInput 
+          style={styles.input} 
+          placeholder='What do you have planned?'
+          placeholderTextColor="gray"
+          value={todoInput}
+          onChangeText={setTodoInput}
+        />
+        <Button title="Add task" onPress={handleAddTodo} />
+        </View>
+
+        <View style={styles.todos}>
+            {todoItems.length >= 1 && <ThemedText type="subtitle">Todos</ThemedText>}
+            {todoItems.map((item, index) =>
+            <ThemedView key={index} style={styles.container}>
+              <>
+              {editingIndex === index ? 
+                <TextInput
+                  style={styles.input}
+                  value={currentEditValue}
+                  onChangeText={setCurrentEditValue}
+                /> 
+                : 
+                <ThemedText type='defaultSemiBold' >{item}</ThemedText> }
+              <ThemedView style={styles.options}>
+                {editingIndex === index ? 
+                  <>
+                   <Pressable onPress={() => setEditingIndex(null)}>
+                    <Text>CANCEL</Text>
+                   </Pressable>
+                   <Pressable onPress={() => handleSaveEdit()}>
+                    <Text>SAVE</Text>
+                   </Pressable>
+                  </>
+                  :
+                  <>
+                   <Pressable onPress={() => handleEdit(index)}>
+                    <Text>EDIT</Text>
+                   </Pressable>
+                   <Pressable onPress={() => handleDelete(index)}>
+                    <Text>DELETE</Text>
+                   </Pressable>
+                  </>
+                }
+              </ThemedView></>
+            </ThemedView>
+            )}
+        </View>
       </ThemedView>
     </ParallaxScrollView>
   );
@@ -64,11 +148,41 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  headerImage: {
+    color: '#808080',
+    bottom: -90,
+    left: -35,
     position: 'absolute',
   },
+  input: {
+    height: 40,
+    borderWidth: 1,
+    borderColor: 'white',
+    color: 'white',
+    padding: 10,
+  },
+  container: {
+    flexDirection: 'row', 
+    flexWrap: 'wrap',
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    backgroundColor: 'gray',
+    padding: 10,
+    borderRadius: 10,
+  },
+  options: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 15,
+    color: 'black',
+    backgroundColor: 'transparent',
+  },
+  todos: {
+    gap: 20,
+    marginTop: 20,
+  },
+  button: {
+    marginTop: 10,
+  }
 });
