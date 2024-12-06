@@ -7,7 +7,6 @@ This is a basic todo list mobile app demonstrating CRUD functionality
 ## Features
 - Add, view, edit, and delete todo items
 - Items remain stored on user's device even when the app is closed
-- Another screen demonstrates the same operations, but from a mock server
 
 ## Tech Stack
 - [Expo](https://expo.dev) - Development framework for mobile apps
