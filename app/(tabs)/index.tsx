@@ -22,9 +22,9 @@ export default function HomeScreen() {
             } catch (e) {
                 console.error('Failed to retrieve data:', e);
             }
-        }
+        };
         getTodos();
-    }, [])
+    }, []);
 
     useEffect(() => {
         const storeTodos = async () => {
@@ -35,21 +35,21 @@ export default function HomeScreen() {
             }
         };
         storeTodos();
-    }, [todoItems])
+    }, [todoItems]);
 
     const handleAddTodo = async () => {
         if(todoInput.trim() === '') {
             Alert.alert('Error', 'Please enter a todo item');
         } else {
-            setTodoItems([todoInput, ...todoItems])
-            setTodoInput('')
+            setTodoItems([ ...todoItems, todoInput]);
+            setTodoInput('');
         }
-    }
+    };
 
     const handleEdit = (index: number) => {
         setEditingIndex(index);
         setCurrentEditValue(todoItems[index]);
-    }
+    };
 
     const handleSaveEdit = () => {
         if(editingIndex !== null && currentEditValue !== '') {
@@ -63,12 +63,12 @@ export default function HomeScreen() {
         if(currentEditValue === '') {
             Alert.alert('Error', 'Please type a todo item');
         } 
-    }
+    };
 
     const handleDelete = (index: number) => {
-        const updatedTodos = todoItems.filter((_, i) => i !== index)
-        setTodoItems(updatedTodos)
-    }
+        const updatedTodos = todoItems.filter((_, i) => i !== index);
+        setTodoItems(updatedTodos);
+    };
 
   return (
     <ParallaxScrollView
@@ -92,8 +92,9 @@ export default function HomeScreen() {
           placeholderTextColor="gray"
           value={todoInput}
           onChangeText={setTodoInput}
+          testID='input-field'
         />
-        <Button title="Add task" onPress={handleAddTodo} />
+        <Button testID='add-todo' title="Add task" onPress={handleAddTodo} />
         </View>
 
         <View style={styles.todos}>
@@ -136,7 +137,7 @@ export default function HomeScreen() {
       </ThemedView>
     </ParallaxScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   titleContainer: {
